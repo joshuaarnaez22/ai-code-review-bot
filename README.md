@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Code Review Bot
 
-## Getting Started
+An AI-powered GitHub App that automatically reviews pull requests with inline comments — checking for security vulnerabilities, missing tests, anti-patterns, and performance issues.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Inline PR Comments** — Comments on specific lines, not just a summary
+- **4 Review Checks** — Security, test coverage, code style, performance
+- **RAG Context** — Understands your codebase by indexing changed files + their imports
+- **Re-review on Push** — Automatically re-reviews when author pushes new commits
+- **Usage Dashboard** — Track all reviews, issues found, severity breakdown
+- **Stripe Paywall** — Free tier (5/mo), Pro ($15/mo), Team ($49/mo)
+
+## Architecture
+
+```
+GitHub PR opened/updated
+        ↓
+Next.js webhook (/api/webhooks/github)
+        ↓
+Verify signature → Fetch PR diff + file context (Octokit)
+        ↓
+RAG: embed changed files + imports → search Supabase for context
+        ↓
+OpenAI gpt-4o: analyze diff → structured inline comments (JSON)
+        ↓
+Post inline comments to GitHub PR
+        ↓
+Save review record to Supabase → update dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 14 (App Router) |
+| Auth | Clerk |
+| AI Model | OpenAI gpt-4o |
+| Embeddings | text-embedding-3-small |
+| Database | Supabase (Postgres + pgvector) |
+| ORM | Drizzle ORM + drizzle-kit |
+| Data Fetching | TanStack Query (React Query v5) |
+| Payments | Stripe |
+| GitHub Integration | Octokit + GitHub App |
+| UI | shadcn/ui + Tailwind CSS |
+| Animations | Framer Motion + React Three Fiber |
+| Deployment | Vercel |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pricing
 
-## Learn More
+| Plan | Price | Reviews/mo | Checks |
+|------|-------|-----------|--------|
+| Free | $0 | 5 | Style checks only |
+| Pro | $15/mo | Unlimited | Security + Tests + Style + Performance |
+| Team | $49/mo | Unlimited | Everything + Multi-repo + Custom rules |
 
-To learn more about Next.js, take a look at the following resources:
+## Local Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
+- Node.js 18+
+- Supabase CLI
+- Stripe CLI
+- GitHub App registered (see setup below)
+- [smee.io](https://smee.io) for local webhook proxy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Clone & Install
+```bash
+git clone https://github.com/yourusername/ai-code-review-bot
+cd ai-code-review-bot
+npm install
+```
 
-## Deploy on Vercel
+### 2. Environment Variables
+Copy `.env.example` to `.env.local` and fill in all values:
+```bash
+cp .env.example .env.local
+```
+See `CLAUDE.md` for full list of required variables.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> **Note:** No Supabase JS keys needed. Drizzle connects directly via `DATABASE_URL` (Postgres connection string from Supabase → Settings → Database → URI).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Supabase Setup
+```bash
+npx supabase start
+npx supabase db push
+```
+
+### 4. GitHub App Setup
+1. Go to GitHub → Settings → Developer Settings → GitHub Apps → New GitHub App
+2. Set webhook URL to your smee.io proxy URL during development
+3. Permissions needed:
+   - Pull requests: Read & Write
+   - Contents: Read
+   - Metadata: Read
+4. Subscribe to events: `pull_request`, `pull_request_review_comment`
+5. Download private key → paste into `GITHUB_APP_PRIVATE_KEY` env var
+
+### 5. Run Locally
+```bash
+# Terminal 1 — Next.js
+npm run dev
+
+# Terminal 2 — Stripe webhook listener
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+
+# Terminal 3 — GitHub webhook proxy
+smee --url https://smee.io/your-channel --target http://localhost:3000/api/webhooks/github
+```
+
+App runs at `http://localhost:3000`
+
+## Database Schema
+
+```sql
+-- Users (synced from Clerk)
+users: id, clerk_id, email, tier (free|pro|team), reviews_used_this_month
+
+-- GitHub installations
+installations: id, user_id, installation_id, account_login
+
+-- Reviews
+reviews: id, user_id, repo, pr_number, pr_title, status, created_at
+
+-- Review comments
+review_comments: id, review_id, file_path, line_number, type (security|test|style|perf), body, severity
+
+-- Document embeddings (RAG)
+documents: id, installation_id, repo, file_path, content, embedding (vector 1536)
+```
+
+## Deployment
+
+1. Push to GitHub
+2. Connect repo to Vercel
+3. Add all environment variables in Vercel dashboard
+4. Update GitHub App webhook URL to your Vercel production URL
+5. Update Stripe webhook endpoint to production URL
+
+## Project Structure
+
+```
+/
+├── CLAUDE.md                 ← AI assistant guidelines
+├── README.md                 ← this file
+├── docs/
+│   ├── todo.md               ← step-by-step build checklist
+│   └── lessons.md            ← lessons learned during development
+├── src/
+│   ├── app/                  ← Next.js App Router pages + API routes
+│   ├── components/           ← UI components
+│   └── lib/                  ← utility functions (github, openai, rag, stripe, supabase)
+└── supabase/migrations/      ← database schema
+```
+
+## Contributing
+
+See `docs/todo.md` for current build status and next steps.

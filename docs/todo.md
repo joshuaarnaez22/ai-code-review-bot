@@ -7,7 +7,7 @@
 
 ## Phase 1: Project Setup
 
-- [ ] **Task 1 — Init Next.js project**
+- [x] **Task 1 — Init Next.js project**
   - Run: `npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir`
   - Install core: `npm install @clerk/nextjs openai stripe @octokit/rest framer-motion three @react-three/fiber @react-three/drei`
   - Install Drizzle: `npm install drizzle-orm postgres` + `npm install -D drizzle-kit`
@@ -15,15 +15,15 @@
   - Install shadcn: `npx shadcn@latest init`
   - Verify: `npm run dev` → app loads at localhost:3000 with no errors
 
-- [ ] **Task 2 — Configure Clerk auth + TanStack Query provider**
+- [x] **Task 2 — Configure Clerk auth + TanStack Query provider**
   - Create Clerk app at clerk.com → copy keys to `.env.local`
   - Wrap `src/app/layout.tsx` with `<ClerkProvider>`
   - Add `<QueryClientProvider>` (TanStack) inside ClerkProvider in layout
   - Create `src/app/sign-in/[[...sign-in]]/page.tsx` and `sign-up` equivalent
-  - Add middleware: `src/middleware.ts` to protect `/dashboard` routes
+  - Add proxy: `src/proxy.ts` to protect `/dashboard` routes (Next.js 16 uses `proxy.ts` not `middleware.ts`)
   - Verify: Visit localhost:3000/dashboard → redirects to /sign-in → sign up works → redirects to /dashboard, TanStack Devtools visible
 
-- [ ] **Task 3 — Set up Supabase + Drizzle**
+- [x] **Task 3 — Set up Supabase + Drizzle**
   - Create Supabase project → copy **only** the direct DB connection string (`DATABASE_URL`) to `.env.local`
   - (Supabase URL/anon key/service role key are NOT needed — Drizzle connects via Postgres directly)
   - Enable pgvector: run `create extension vector` in Supabase SQL editor
@@ -33,7 +33,7 @@
   - Run: `npx drizzle-kit push` to apply schema to Supabase
   - Verify: Tables visible in Supabase dashboard → `users`, `installations`, `reviews`, `review_comments`, `documents`
 
-- [ ] **Task 4 — Create .env.example**
+- [x] **Task 4 — Create .env.example**
   - Copy `.env.local` keys (without values) into `.env.example`
   - Add `.env.local` to `.gitignore`
   - Verify: `.env.example` committed, `.env.local` not tracked by git
