@@ -42,25 +42,25 @@
 
 ## Phase 2: Landing Page UI
 
-- [ ] **Task 5 — Build 3D hero section**
-  - Create `src/components/landing/Hero3D.tsx` using React Three Fiber
-  - Animated floating code review visualization (orbiting nodes/particles)
-  - Add headline, sub-headline, and "Install on GitHub" CTA button
-  - Verify: 3D animation renders at localhost:3000, no WebGL errors in console
+- [x] **Task 5 — Build hero section**
+  - Clean two-column layout: copy left, PR review mockup right
+  - Dark/light mode with next-themes + ThemeToggle component
+  - Framer Motion entrance animations
+  - Verify: localhost:3000 renders hero, theme toggle switches dark/light
 
-- [ ] **Task 6 — Build features section**
+- [x] **Task 6 — Build features section**
   - Create `src/components/landing/Features.tsx`
   - 4 feature cards (Security, Tests, Style, Performance) with icons
   - Framer Motion: cards animate in on scroll (`useInView` + `motion.div`)
   - Verify: Scroll down → cards animate into view one by one
 
-- [ ] **Task 7 — Build pricing section**
+- [x] **Task 7 — Build pricing section**
   - Create `src/components/landing/Pricing.tsx`
   - 3 pricing cards: Free / Pro ($15) / Team ($49) with perk lists
   - Highlight Pro card as "Most Popular"
   - Verify: 3 cards render correctly, Free card has no payment button
 
-- [ ] **Task 8 — Connect Stripe Checkout**
+- [x] **Task 8 — Connect Stripe Checkout**
   - Create Stripe products + prices in Stripe dashboard → add price IDs to `.env.local`
   - Create `src/app/api/checkout/route.ts` → creates Stripe Checkout session
   - Wire "Upgrade to Pro" and "Upgrade to Team" buttons to hit this endpoint
